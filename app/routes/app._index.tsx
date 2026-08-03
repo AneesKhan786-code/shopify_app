@@ -4,348 +4,409 @@ import type {
   HeadersFunction,
   LoaderFunctionArgs,
 } from "react-router";
-import { useFetcher } from "react-router";
+import { useFetcher, useRouteError } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { fetchAllProducts } from "../lib/products.server";
+import { analyzeProducts } from "../lib/seo-analyzer.server";
+import stylesheet from "../styles/dashboard.css?url";
+import type { AnalyzedProduct, IssueSeverity } from "../types/products";
+
+// ── Route meta ────────────────────────────────────────────────────────────────
+
+export const links = () => [{ rel: "stylesheet", href: stylesheet }];
+
+// ── Server loader (authentication guard — do not remove) ──────────────────────
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
-
   return null;
 };
 
+// ── Server action — triggered by Scan Products button ────────────────────────
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
-  const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-            demoInfo: metafield(namespace: "$app", key: "demo_info") {
-              jsonValue
-            }
-          }
-        }
-      }`,
-    {
-      variables: {
-        product: {
-          title: `${color} Snowboard`,
-          metafields: [
-            {
-              namespace: "$app",
-              key: "demo_info",
-              value: "Created by React Router Template",
-            },
-          ],
-        },
-      },
-    },
-  );
-  const responseJson = await response.json();
-
-  const product = responseJson.data!.productCreate!.product!;
-  const variantId = product.variants.edges[0]!.node!.id!;
-
-  const variantResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyReactRouterTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
-        }
-      }
-    }`,
-    {
-      variables: {
-        productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
-      },
-    },
-  );
-
-  const variantResponseJson = await variantResponse.json();
-
-  const metaobjectResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyReactRouterTemplateUpsertMetaobject($handle: MetaobjectHandleInput!, $values: JSON!) {
-      metaobjectUpsert(handle: $handle, values: $values) {
-        metaobject {
-          id
-          handle
-          values
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }`,
-    {
-      variables: {
-        handle: {
-          type: "$app:example",
-          handle: "demo-entry",
-        },
-        values: {
-          title: "Demo Entry",
-          description:
-            "This metaobject was created by the Shopify app template to demonstrate the metaobject API.",
-        },
-      },
-    },
-  );
-
-  const metaobjectResponseJson = await metaobjectResponse.json();
-
-  return {
-    product: responseJson!.data!.productCreate!.product,
-    variant:
-      variantResponseJson!.data!.productVariantsBulkUpdate!.productVariants,
-    metaobject: metaobjectResponseJson!.data!.metaobjectUpsert!.metaobject,
-  };
+  try {
+    const rawProducts = await fetchAllProducts(admin);
+    const { analyzed, averageSeoScore, totalIssues } =
+      analyzeProducts(rawProducts);
+    return {
+      ok: true as const,
+      products: analyzed,
+      totalCount: analyzed.length,
+      averageSeoScore,
+      totalIssues,
+      scannedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      ok: false as const,
+      error:
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during the scan.",
+    };
+  }
 };
 
-export default function Index() {
+// ── Score helpers ─────────────────────────────────────────────────────────────
+
+const RING_RADIUS = 27;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+function getScoreColor(score: number): string {
+  if (score >= 90) return "#1a7f5a"; // Excellent — green
+  if (score >= 75) return "#2563eb"; // Good — blue
+  if (score >= 50) return "#d97706"; // Fair — amber
+  return "#b91c1c";                  // Poor — red
+}
+
+function getScoreLabel(score: number): string {
+  if (score >= 90) return "Excellent";
+  if (score >= 75) return "Good";
+  if (score >= 50) return "Fair";
+  return "Poor";
+}
+
+function getScoreChipClass(score: number): string {
+  if (score >= 90) return "score-chip score-chip--excellent";
+  if (score >= 75) return "score-chip score-chip--good";
+  if (score >= 50) return "score-chip score-chip--fair";
+  return "score-chip score-chip--poor";
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function ScoreChip({ score }: { score: number }) {
+  return <span className={getScoreChipClass(score)}>{score}</span>;
+}
+
+function SeverityBadge({ severity }: { severity: IssueSeverity }) {
+  return (
+    <span className={`badge badge--sev-${severity}`}>
+      {severity.toUpperCase()}
+    </span>
+  );
+}
+
+// ── Dashboard page ────────────────────────────────────────────────────────────
+
+export default function DashboardPage() {
+  const shopify = useAppBridge();
   const fetcher = useFetcher<typeof action>();
 
-  const shopify = useAppBridge();
-  const isLoading =
-    ["loading", "submitting"].includes(fetcher.state) &&
-    fetcher.formMethod === "POST";
+  const isScanning = fetcher.state !== "idle";
+  const scanData = fetcher.data;
 
+  // Type-narrowed derived state
+  const hasResults = scanData?.ok === true;
+  const products: AnalyzedProduct[] = hasResults ? scanData.products : [];
+  const totalCount: number = hasResults ? scanData.totalCount : 0;
+  const averageSeoScore: number = hasResults ? scanData.averageSeoScore : 0;
+  const totalIssues: number = hasResults ? scanData.totalIssues : 0;
+  const scannedAt: string | null = hasResults ? scanData.scannedAt : null;
+
+  // Dynamic ring values
+  const ringColor = hasResults ? getScoreColor(averageSeoScore) : "#d1d5db";
+  const ringFilled = hasResults
+    ? RING_CIRCUMFERENCE * (averageSeoScore / 100)
+    : 0;
+
+  // Surface scan errors via toast
+  const errorMessage = scanData?.ok === false ? scanData.error : null;
   useEffect(() => {
-    if (fetcher.data?.product?.id) {
-      shopify.toast.show("Product created");
+    if (errorMessage) {
+      shopify.toast.show(`Scan failed: ${errorMessage}`, {
+        isError: true,
+        duration: 6000,
+      });
     }
-  }, [fetcher.data?.product?.id, shopify]);
+  }, [errorMessage, shopify]);
 
-  const generateProduct = () => fetcher.submit({}, { method: "POST" });
+  function handleScan() {
+    fetcher.submit({}, { method: "POST" });
+  }
 
   return (
-    <s-page heading="Shopify app template">
-      <s-button slot="primary-action" onClick={generateProduct}>
-        Generate a product
-      </s-button>
+    <s-page heading="Product SEO Auditor">
 
-      <s-section heading="Congrats on creating a new Shopify app 🎉">
-        <s-paragraph>
-          This embedded app template uses{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/tools/app-bridge"
-            target="_blank"
-          >
-            App Bridge
-          </s-link>{" "}
-          interface examples like an{" "}
-          <s-link href="/app/additional">additional page in the app nav</s-link>
-          , as well as an{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            Admin GraphQL
-          </s-link>{" "}
-          mutation demo, to provide a starting point for app development.
-        </s-paragraph>
-      </s-section>
-      <s-section heading="Get started with products">
-        <s-paragraph>
-          Generate a product with GraphQL and get the JSON output for that
-          product. Learn more about the{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-            target="_blank"
-          >
-            productCreate
-          </s-link>{" "}
-          mutation in our API references. Includes a product{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/build/custom-data/metafields"
-            target="_blank"
-          >
-            metafield
-          </s-link>{" "}
-          and{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/build/custom-data/metaobjects"
-            target="_blank"
-          >
-            metaobject
-          </s-link>
-          .
-        </s-paragraph>
-        <s-stack direction="inline" gap="base">
-          <s-button
-            onClick={generateProduct}
-            {...(isLoading ? { loading: true } : {})}
-          >
-            Generate a product
-          </s-button>
-          {fetcher.data?.product && (
+      {/* ── Stat cards + CTA ── */}
+      <s-section>
+        <div className="dashboard">
+
+          <div className="header">
+            <p className="subtitle">
+              Analyze and improve your Shopify product SEO performance
+            </p>
+          </div>
+
+          {/* ── Three stat cards ── */}
+          <div className="cards">
+
+            {/* Card 1 — SEO Health Score */}
+            <div
+              className="card card--score"
+              style={hasResults
+                ? { borderTopColor: getScoreColor(averageSeoScore) }
+                : undefined}
+            >
+              <span className="card-label">📊 SEO Health Score</span>
+              <div className="score-row">
+                <div className="score-ring">
+                  <svg
+                    viewBox="0 0 68 68"
+                    width="68"
+                    height="68"
+                    aria-hidden="true"
+                  >
+                    {/* Background track */}
+                    <circle
+                      cx="34" cy="34" r={RING_RADIUS}
+                      fill="none" stroke="#e1e3e5" strokeWidth="7"
+                    />
+                    {/* Filled arc */}
+                    <circle
+                      cx="34" cy="34" r={RING_RADIUS}
+                      fill="none"
+                      stroke={ringColor}
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      strokeDasharray={`${ringFilled} ${RING_CIRCUMFERENCE}`}
+                    />
+                  </svg>
+                  <span
+                    className="score-ring-label"
+                    style={{ color: ringColor }}
+                    aria-label={
+                      hasResults
+                        ? `${averageSeoScore} percent`
+                        : "No data yet"
+                    }
+                  >
+                    {hasResults ? `${averageSeoScore}%` : "—"}
+                  </span>
+                </div>
+
+                <div className="score-detail">
+                  <span
+                    className="score-value"
+                    style={{ color: hasResults ? getScoreColor(averageSeoScore) : "#c9cccf" }}
+                  >
+                    {hasResults ? `${averageSeoScore}%` : "—"}
+                  </span>
+                  <span
+                    className="score-badge"
+                    style={
+                      hasResults
+                        ? {
+                            color: getScoreColor(averageSeoScore),
+                            background: hasResults && averageSeoScore >= 90
+                              ? "#e3f5ed"
+                              : hasResults && averageSeoScore >= 75
+                                ? "#eff6ff"
+                                : hasResults && averageSeoScore >= 50
+                                  ? "#fffbeb"
+                                  : "#fef2f2",
+                          }
+                        : undefined
+                    }
+                  >
+                    {hasResults
+                      ? `${getScoreLabel(averageSeoScore)} ✓`
+                      : "Run a scan"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2 — Products Scanned */}
+            <div className={`card${hasResults ? " card--active" : ""}`}>
+              <span className="card-label">📦 Products Scanned</span>
+              <span
+                className={`stat-value${hasResults ? " stat-value--active" : ""}`}
+              >
+                {isScanning ? "…" : totalCount}
+              </span>
+              <span className="stat-sub">
+                {isScanning
+                  ? "Fetching all products…"
+                  : hasResults
+                    ? `Last scanned ${formatDateTime(scannedAt!)}`
+                    : "No scans completed yet"}
+              </span>
+            </div>
+
+            {/* Card 3 — Issues Found */}
+            <div
+              className={`card${hasResults && totalIssues > 0 ? " card--issues" : ""}`}
+            >
+              <span className="card-label">⚠️ Issues Found</span>
+              <span
+                className={`stat-value${hasResults && totalIssues > 0 ? " stat-value--issues" : ""}`}
+              >
+                {isScanning ? "…" : totalIssues}
+              </span>
+              <span className="stat-sub">
+                {isScanning
+                  ? "Analyzing SEO data…"
+                  : hasResults && totalIssues > 0
+                    ? `Across ${totalCount} product${totalCount !== 1 ? "s" : ""}`
+                    : hasResults
+                      ? "All products look great!"
+                      : "Start your first SEO audit"}
+              </span>
+            </div>
+
+          </div>
+
+          {/* ── Primary CTA ── */}
+          <div className="actions">
             <s-button
-              onClick={() => {
-                shopify.intents.invoke?.("edit:shopify/Product", {
-                  value: fetcher.data?.product?.id,
-                });
-              }}
-              target="_blank"
-              variant="tertiary"
+              variant="primary"
+              onClick={handleScan}
+              {...(isScanning ? { loading: true } : {})}
             >
-              Edit product
+              {isScanning ? "Analyzing…" : "🔍 Scan Products"}
             </s-button>
-          )}
-        </s-stack>
-        {fetcher.data?.product && (
-          <s-section heading="productCreate mutation">
-            <s-stack direction="block" gap="base">
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre
-                  style={{
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <code>{JSON.stringify(fetcher.data.product, null, 2)}</code>
-                </pre>
-              </s-box>
+            <span className="action-hint">
+              {isScanning
+                ? "Fetching and analyzing all products…"
+                : hasResults
+                  ? `${totalCount} product${totalCount !== 1 ? "s" : ""} analyzed — click to re-scan`
+                  : "Fetches and scores all products in your store"}
+            </span>
+          </div>
 
-              <s-heading>productVariantsBulkUpdate mutation</s-heading>
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre
-                  style={{
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <code>{JSON.stringify(fetcher.data.variant, null, 2)}</code>
-                </pre>
-              </s-box>
-
-              <s-heading>metaobjectUpsert mutation</s-heading>
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre
-                  style={{
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <code>
-                    {JSON.stringify(fetcher.data.metaobject, null, 2)}
-                  </code>
-                </pre>
-              </s-box>
-            </s-stack>
-          </s-section>
-        )}
+        </div>
       </s-section>
 
-      <s-section slot="aside" heading="App template specs">
-        <s-paragraph>
-          <s-text>Framework: </s-text>
-          <s-link href="https://reactrouter.com/" target="_blank">
-            React Router
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Interface: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/app-home/using-polaris-components"
-            target="_blank"
-          >
-            Polaris web components
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>API: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            GraphQL
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Custom data: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/apps/build/custom-data"
-            target="_blank"
-          >
-            Metafields &amp; metaobjects
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Database: </s-text>
-          <s-link href="https://www.prisma.io/" target="_blank">
-            Prisma
-          </s-link>
-        </s-paragraph>
-      </s-section>
+      {/* ── SEO Audit Results table ── */}
+      {hasResults && products.length > 0 && (
+        <s-section heading="SEO Audit Results">
+          <div className="scan-results">
 
-      <s-section slot="aside" heading="Next steps">
-        <s-unordered-list>
-          <s-list-item>
-            Build an{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/getting-started/build-app-example"
-              target="_blank"
-            >
-              example app
-            </s-link>
-          </s-list-item>
-          <s-list-item>
-            Explore Shopify&apos;s API with{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-              target="_blank"
-            >
-              GraphiQL
-            </s-link>
-          </s-list-item>
-        </s-unordered-list>
-      </s-section>
+            <div className="scan-summary">
+              <span>
+                <strong>{products.length}</strong>{" "}
+                product{products.length !== 1 ? "s" : ""} analyzed on{" "}
+                <strong>{formatDateTime(scannedAt!)}</strong>
+                {" · "}
+                Average score:{" "}
+                <strong style={{ color: getScoreColor(averageSeoScore) }}>
+                  {averageSeoScore}%
+                </strong>
+                {" · "}
+                Total issues: <strong>{totalIssues}</strong>
+              </span>
+              <span className="scan-summary-hint">
+                Bulk fixes and recommendations coming in the next phase
+              </span>
+            </div>
+
+            <div className="table-wrapper">
+              <table className="audit-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>SEO Score</th>
+                    <th>Issues</th>
+                    <th>Severity</th>
+                    <th>Recommendation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product) => (
+                    <tr key={product.id}>
+
+                      {/* Product title + handle */}
+                      <td>
+                        <div className="product-cell">
+                          <span
+                            className="product-title"
+                            title={product.title}
+                          >
+                            {product.title}
+                          </span>
+                          <span className="product-handle">
+                            /{product.handle}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* SEO score chip */}
+                      <td>
+                        <ScoreChip score={product.seoScore} />
+                      </td>
+
+                      {/* Issue count */}
+                      <td>
+                        <span
+                          className={
+                            product.issues.length === 0
+                              ? "issue-count issue-count--none"
+                              : "issue-count"
+                          }
+                        >
+                          {product.issues.length === 0
+                            ? "✓ None"
+                            : product.issues.length}
+                        </span>
+                      </td>
+
+                      {/* Worst severity */}
+                      <td>
+                        {product.topIssue ? (
+                          <SeverityBadge
+                            severity={product.topIssue.severity}
+                          />
+                        ) : (
+                          <span className="badge badge--ok">✓ None</span>
+                        )}
+                      </td>
+
+                      {/* Top recommendation */}
+                      <td>
+                        <span
+                          className="recommendation-text"
+                          title={product.topIssue?.recommendation}
+                        >
+                          {product.topIssue?.recommendation ??
+                            "All SEO checks passed"}
+                        </span>
+                      </td>
+
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </s-section>
+      )}
+
     </s-page>
   );
 }
+
+// ── Shopify error boundary (required — do not remove) ─────────────────────────
+
+export function ErrorBoundary() {
+  return boundary.error(useRouteError());
+}
+
+// ── Shopify response headers (required — do not remove) ───────────────────────
 
 export const headers: HeadersFunction = (headersArgs) => {
   return boundary.headers(headersArgs);

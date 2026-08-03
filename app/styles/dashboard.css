@@ -1,0 +1,385 @@
+/* =========================================================
+   Product SEO Auditor — Dashboard Page Styles
+   Scoped to dashboard root; no global overrides.
+   ========================================================= */
+
+/* ── Page wrapper ─────────────────────────────────────── */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 4px 0;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6d7175;
+  line-height: 1.5;
+}
+
+/* ── Stat card grid ───────────────────────────────────── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Individual card ──────────────────────────────────── */
+.card {
+  background: #ffffff;
+  border: 1px solid #e1e3e5;
+  border-top: 3px solid #e1e3e5;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Score card — top accent driven by inline style (dynamic color) */
+.card--score {
+  border-top-color: #1a7f5a; /* overridden by inline style after scan */
+}
+
+/* Products Scanned — blue when it has real data */
+.card--active {
+  border-top-color: #2563eb;
+}
+
+/* Issues Found — red when there are issues */
+.card--issues {
+  border-top-color: #b91c1c;
+}
+
+.card-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6d7175;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── SEO Health Score card ────────────────────────────── */
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.score-ring {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+}
+
+.score-ring svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.score-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+  /* color driven by inline style */
+}
+
+.score-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.score-value {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  /* color driven by inline style */
+}
+
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 10px;
+  width: fit-content;
+  /* color & background driven by inline style */
+  color: #6d7175;
+  background: #f1f1f1;
+}
+
+/* ── Zero-state stat cards ────────────────────────────── */
+.stat-value {
+  font-size: 44px;
+  font-weight: 700;
+  color: #c9cccf;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.stat-value--active {
+  color: #2563eb;
+}
+
+.stat-value--issues {
+  color: #b91c1c;
+}
+
+.stat-sub {
+  font-size: 13px;
+  color: #8c9196;
+  font-style: italic;
+}
+
+/* ── Action row ───────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.action-hint {
+  font-size: 13px;
+  color: #8c9196;
+}
+
+/* ── Scan results section ─────────────────────────────── */
+.scan-results {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Summary bar above the table */
+.scan-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f6f6f7;
+  border: 1px solid #e1e3e5;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #6d7175;
+}
+
+.scan-summary strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.scan-summary-hint {
+  font-size: 12px;
+  color: #8c9196;
+  font-style: italic;
+}
+
+/* Table scroll container */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e1e3e5;
+  max-height: 540px;
+  overflow-y: auto;
+}
+
+/* Audit table */
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #ffffff;
+}
+
+/* Sticky header */
+.audit-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6d7175;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #f6f6f7;
+  border-bottom: 1px solid #e1e3e5;
+  white-space: nowrap;
+}
+
+.audit-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f2f3;
+  color: #1a1a1a;
+  vertical-align: middle;
+}
+
+.audit-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.audit-table tbody tr:hover td {
+  background: #fafafa;
+}
+
+/* Column width hints */
+.audit-table th:nth-child(1) { width: 28%; } /* Product */
+.audit-table th:nth-child(2) { width: 10%; } /* SEO Score */
+.audit-table th:nth-child(3) { width: 9%;  } /* Issues */
+.audit-table th:nth-child(4) { width: 10%; } /* Severity */
+.audit-table th:nth-child(5) { width: 43%; } /* Recommendation */
+
+/* Product cell — stacked title + handle */
+.product-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.product-title {
+  display: block;
+  font-weight: 500;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-handle {
+  display: block;
+  font-family: ui-monospace, "Cascadia Code", "Fira Mono", monospace;
+  font-size: 11px;
+  color: #8c9196;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Issue count cell */
+.issue-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.issue-count--none {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a7f5a;
+}
+
+/* Recommendation cell — soft truncation with full text in title tooltip */
+.recommendation-text {
+  display: block;
+  font-size: 13px;
+  color: #4a4a4a;
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Score chip (in table SEO Score column) ───────────────── */
+.score-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.score-chip--excellent {
+  background: #e3f5ed;
+  color: #1a7f5a;
+}
+
+.score-chip--good {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.score-chip--fair {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.score-chip--poor {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* ── Status / severity badges ─────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Generic present/missing */
+.badge--ok {
+  color: #1a7f5a;
+  background: #e3f5ed;
+}
+
+.badge--missing {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+/* Severity-specific */
+.badge--sev-high {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.badge--sev-medium {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.badge--sev-low {
+  color: #2563eb;
+  background: #eff6ff;
+}
