@@ -1,17 +1,25 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ── Product SEO Auditor — Prisma Schema ──────────────────────────────────────
+// Local development: SQLite (file-based, zero config, ships with the repo)
+// Production: switch provider to "postgresql" and set DATABASE_URL + DIRECT_DATABASE_URL
+//
+// To migrate to PostgreSQL for production:
+//   1. Create a free database at https://neon.tech
+//   2. Copy the connection strings into .env
+//   3. Change provider below to "postgresql" and add directUrl = env("DIRECT_DATABASE_URL")
+//   4. Delete prisma/migrations/ and run: npx prisma migrate dev --name init
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
-// enough when changing adapters.
-// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
   provider = "sqlite"
-  url      = "file:dev.sqlite"
+  url      = env("DATABASE_URL")
 }
+
+// ── Session ───────────────────────────────────────────────────────────────────
+// Managed by @shopify/shopify-app-session-storage-prisma.
+// Do not rename fields — the package expects this exact shape.
 
 model Session {
   id            String    @id
@@ -31,4 +39,23 @@ model Session {
   emailVerified Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
+}
+
+// ── ScanHistory ───────────────────────────────────────────────────────────────
+// One record per completed SEO scan. Scoped by shop for multi-tenant safety.
+// topProblems stores the serialized TopProblem[] array so history cards can
+// display what was wrong without re-fetching products.
+
+model ScanHistory {
+  id                 String   @id @default(cuid())
+  shop               String
+  averageSeoScore    Int
+  productsScanned    Int
+  totalIssues        Int
+  highSeverityIssues Int
+  topProblems        Json     @default("[]")
+  createdAt          DateTime @default(now())
+
+  // Descending sort on createdAt makes "last N scans" queries index-only.
+  @@index([shop, createdAt(sort: Desc)])
 }

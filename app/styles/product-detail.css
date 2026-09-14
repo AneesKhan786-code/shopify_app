@@ -1,0 +1,309 @@
+/* =========================================================
+   Product SEO Auditor — Product Detail Page Styles
+   ========================================================= */
+
+/* ── Page wrapper ─────────────────────────────────────── */
+.detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.back-nav {
+  font-size: 14px;
+}
+
+/* ── Product overview card ────────────────────────────── */
+.overview-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px;
+  background: #ffffff;
+  border: 1px solid #e1e3e5;
+  border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+  .overview-card {
+    flex-direction: column-reverse;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+.overview-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.overview-product-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+
+.overview-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.handle-chip {
+  font-family: ui-monospace, "Cascadia Code", "Fira Mono", monospace;
+  font-size: 12px;
+  color: #6d7175;
+  background: #f6f6f7;
+  border: 1px solid #e1e3e5;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.status-chip {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 9px;
+  border-radius: 20px;
+}
+
+.status-chip--active   { background: #e3f5ed; color: #1a7f5a; }
+.status-chip--draft    { background: #f1f1f1; color: #6d7175; }
+.status-chip--archived { background: #fef2f2; color: #8c9196; }
+
+.overview-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6d7175;
+  flex-wrap: wrap;
+}
+
+.dot-sep {
+  color: #c9cccf;
+}
+
+.overview-score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.score-grade {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ── Issues container ─────────────────────────────────── */
+.issues-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Success banner ───────────────────────────────────── */
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+}
+
+.success-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.success-title {
+  display: block;
+  font-size: 15px;
+  color: #1a7f5a;
+  margin-bottom: 4px;
+}
+
+.success-body {
+  margin: 0;
+  font-size: 14px;
+  color: #6d7175;
+}
+
+/* ── Issue card ───────────────────────────────────────── */
+.issue-card {
+  background: #ffffff;
+  border: 1px solid #e1e3e5;
+  border-left: 4px solid #e1e3e5;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease;
+}
+
+.issue-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.issue-card--high   { border-left-color: #b91c1c; }
+.issue-card--medium { border-left-color: #d97706; }
+.issue-card--low    { border-left-color: #2563eb; }
+
+.issue-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #f1f2f3;
+}
+
+.issue-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.issue-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Issue field group (label + text) ─────────────────── */
+.issue-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6d7175;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.field-text {
+  margin: 0;
+  font-size: 14px;
+  color: #4a4a4a;
+  line-height: 1.65;
+}
+
+/* ── Issue action area ────────────────────────────────── */
+.issue-action {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Suggestion box ───────────────────────────────────── */
+.suggestion-box {
+  background: #f0f6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestion-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.suggestion-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.suggestion-chars {
+  font-size: 12px;
+  color: #6d7175;
+}
+
+.suggestion-text {
+  font-size: 14px;
+  color: #1a1a1a;
+  line-height: 1.65;
+  background: #ffffff;
+  border: 1px solid #e1e3e5;
+  border-radius: 6px;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+}
+
+.suggestion-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.suggestion-note {
+  font-size: 12px;
+  color: #8c9196;
+  font-style: italic;
+}
+
+/* ── Severity badges ──────────────────────────────────── */
+.sev-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sev-badge--high   { background: #fef2f2; color: #b91c1c; }
+.sev-badge--medium { background: #fffbeb; color: #d97706; }
+.sev-badge--low    { background: #eff6ff; color: #2563eb; }
+
+/* ── Optimization opportunities ───────────────────────── */
+.opportunities {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.opps-intro {
+  margin: 0;
+  font-size: 14px;
+  color: #6d7175;
+  line-height: 1.5;
+}
+
+.opps-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.opps-list li {
+  font-size: 14px;
+  color: #4a4a4a;
+  line-height: 1.5;
+}

@@ -1,0 +1,210 @@
+/* =========================================================
+   Product SEO Auditor — Pricing Page Styles
+   ========================================================= */
+
+.pricing-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 24px;
+  max-width: 1200px;
+  min-height: 100vh;
+  background: #f6f6f7;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ── Header ────────────────────────────────────────────── */
+.pricing-header {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  border: 1px solid #e1e3e5;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+.pricing-title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #202223;
+  letter-spacing: -0.5px;
+}
+
+.pricing-subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: #6d7175;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+/* ── Grid ──────────────────────────────────────────────── */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+@media (max-width: 800px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Cards ─────────────────────────────────────────────── */
+.plan-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid #e1e3e5;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+/* Highlight Pro Plan */
+.plan-card--pro {
+  border: 2px solid #008060;
+  box-shadow: 0 4px 20px rgba(0,128,96,0.12);
+}
+
+.plan-card--pro:hover {
+  box-shadow: 0 8px 24px rgba(0,128,96,0.18);
+}
+
+/* Popular Badge */
+.plan-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #008060;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Plan details */
+.plan-name {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #202223;
+  text-align: center;
+}
+
+.plan-price-box {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1e3e5;
+}
+
+.plan-price {
+  font-size: 36px;
+  font-weight: 800;
+  color: #202223;
+}
+
+.plan-period {
+  font-size: 14px;
+  color: #6d7175;
+  font-weight: 500;
+}
+
+.plan-desc {
+  font-size: 13px;
+  color: #6d7175;
+  text-align: center;
+  margin: 0 0 24px 0;
+  line-height: 1.4;
+}
+
+/* Features */
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.feature-item {
+  font-size: 14px;
+  color: #4a4d50;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.4;
+}
+
+.feature-icon {
+  color: #008060;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* ── Buttons ───────────────────────────────────────────── */
+.plan-action-btn {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #c9cccf;
+  background: #ffffff;
+  color: #202223;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.plan-action-btn:hover {
+  background: #f6f6f7;
+  border-color: #a9acb0;
+}
+
+.plan-action-btn--primary {
+  background: linear-gradient(135deg, #008060, #004c3f);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,128,96,0.25);
+}
+
+.plan-action-btn--primary:hover {
+  background: linear-gradient(135deg, #006e52, #003d30);
+  box-shadow: 0 4px 12px rgba(0,128,96,0.35);
+  transform: translateY(-1px);
+}
+
+.plan-action-btn--primary:active {
+  transform: translateY(0);
+}
+
+.plan-action-btn--active {
+  background: #e2f1eb;
+  color: #008060;
+  border: 1px solid #8fc9b6;
+  cursor: default;
+}
+
+.plan-action-btn--active:hover {
+  background: #e2f1eb;
+}

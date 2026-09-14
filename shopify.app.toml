@@ -1,50 +1,32 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "7e8ff0331983dd80e8b2077b112c4472"
+# application_url is auto-updated during development by the Shopify CLI.
+# Before submitting to the App Store, replace with your real production URL.
 application_url = "https://example.com"
 embedded = true
 name = "product-seo-auditor"
 
 [access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_metaobjects,write_metaobject_definitions"
-
-[product.metafields.app.demo_info]
-type = "single_line_text_field"
-name = "Demo Source Info"
-description = "Tracks products created by the Shopify app template for development"
-
-  [product.metafields.app.demo_info.access]
-  admin = "merchant_read_write"
-
-[metaobjects.app.example]
-name = "Example"
-description = "An example metaobject definition created by this template"
-
-  [metaobjects.app.example.access]
-  admin = "merchant_read_write"
-
-[metaobjects.app.example.fields.title]
-name = "Title"
-type = "single_line_text_field"
-required = true
-
-[metaobjects.app.example.fields.description]
-name = "Description"
-type = "multi_line_text_field"
+# write_products grants read + write access to:
+#   - Product title, description, SEO title, SEO meta description
+#   - Product images and image alt text
+# No other scopes are required for this app.
+scopes = "write_products"
 
 [webhooks]
-api_version = "2026-10"
+api_version = "2026-07"
 
   [[webhooks.subscriptions]]
   uri = "/webhooks/app/uninstalled"
-  topics = [ "app/uninstalled" ]
+  topics = ["app/uninstalled"]
 
   [[webhooks.subscriptions]]
   uri = "/webhooks/app/scopes_update"
-  topics = [ "app/scopes_update" ]
+  topics = ["app/scopes_update"]
 
 [auth]
+# Update redirect_urls with your production URL before App Store submission.
 redirect_urls = [ "https://example.com/api/auth" ]
 
 [build]

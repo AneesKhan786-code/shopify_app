@@ -1,5 +1,4 @@
 // ── Product SEO Auditor — Shared TypeScript Types ─────────────────────────────
-// Used by both server modules (lib/*.server.ts) and the client route.
 
 // ── Raw product types (from GraphQL) ─────────────────────────────────────────
 
@@ -22,7 +21,6 @@ export interface ScannedProduct {
   description: string;
   handle: string;
   status: ProductStatus;
-  /** Only the first image is fetched — sufficient for alt-text audit. */
   images: ProductImage[];
   seo: ProductSeoFields;
 }
@@ -32,26 +30,79 @@ export interface ScannedProduct {
 export type IssueSeverity = "high" | "medium" | "low";
 
 export interface SEOIssue {
-  /** Which field this issue relates to (e.g. "seo_title", "description"). */
   field: string;
-  /** Human-readable description of what is wrong. */
   message: string;
   severity: IssueSeverity;
-  /** Actionable fix suggestion shown in the dashboard table. */
   recommendation: string;
 }
 
-/**
- * A ScannedProduct enriched with SEO analysis results.
- * Extends the raw product with score, issues list and the single top issue.
- */
 export interface AnalyzedProduct extends ScannedProduct {
-  /** 0–100 score computed by the SEO analyzer. */
   seoScore: number;
-  /** All issues found for this product, sorted high → medium → low. */
   issues: SEOIssue[];
-  /** The single highest-severity issue, or null if there are none. */
   topIssue: SEOIssue | null;
+}
+
+// ── Recommendation types ──────────────────────────────────────────────────────
+
+export interface Recommendation {
+  field: string;
+  message: string;
+  severity: IssueSeverity;
+  shortFix: string;
+  explanation: string;
+  stepByStepFix: string;
+  /** Pre-generated suggested value (seo_title / seo_description / description). */
+  suggestion?: string;
+  /** Current value of the field in Shopify (null = not set). */
+  currentValue?: string | null;
+}
+
+// ── Aggregate analysis types ──────────────────────────────────────────────────
+
+export interface TopProblem {
+  field: string;
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+// ── Database scan history ─────────────────────────────────────────────────────
+
+/** Serialized Prisma ScanHistory record (dates as ISO strings for JSON transport). */
+export interface DbScanRecord {
+  id: string;
+  shop: string;
+  averageSeoScore: number;
+  productsScanned: number;
+  totalIssues: number;
+  highSeverityIssues: number;
+  createdAt: string; // ISO 8601
+}
+
+// ── Session-only scan history (deprecated — replaced by DbScanRecord) ─────────
+/** @deprecated Use DbScanRecord instead. Kept for type compatibility during transition. */
+export interface ScanHistoryEntry {
+  id: string;
+  scannedAt: string;
+  totalCount: number;
+  averageSeoScore: number;
+  totalIssues: number;
+  highSeverityIssues: number;
+}
+
+// ── Mutation result types ─────────────────────────────────────────────────────
+
+export interface MutationResult {
+  ok: boolean;
+  error?: string;
+}
+
+export interface BulkFixResult {
+  field: string;
+  succeeded: number;
+  failed: number;
+  skipped: number;
+  errors: string[];
 }
 
 // ── Action return types (discriminated union) ─────────────────────────────────
@@ -60,11 +111,11 @@ export interface ScanSuccess {
   ok: true;
   products: AnalyzedProduct[];
   totalCount: number;
-  /** Average SEO score across all scanned products (0–100). */
   averageSeoScore: number;
-  /** Sum of all issues across all products. */
   totalIssues: number;
-  scannedAt: string; // ISO 8601
+  highSeverityIssues: number;
+  topProblems: TopProblem[];
+  scannedAt: string;
 }
 
 export interface ScanError {

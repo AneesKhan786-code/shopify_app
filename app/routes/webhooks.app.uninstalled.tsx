@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { deleteShopScanHistory } from "../lib/scan-history.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop, session, topic } = await authenticate.webhook(request);
@@ -12,6 +13,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (session) {
     await db.session.deleteMany({ where: { shop } });
   }
+
+  // Delete all scan history for this shop regardless of session state.
+  // This is both a data hygiene requirement and pre-emptive GDPR compliance.
+  // The .catch() ensures session cleanup above is never blocked by a DB failure.
+  await deleteShopScanHistory(shop).catch((err) => {
+    console.error(`[Webhook] Failed to delete scan history for ${shop}:`, err);
+  });
 
   return new Response();
 };
